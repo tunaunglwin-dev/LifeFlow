@@ -59,10 +59,10 @@ app.MapPost("/api/register", async (LoginDto dto) =>
     }
     await using var db = new NpgsqlConnection(connectionString);
     await db.OpenAsync();
-    await using var exists = new NpgsqlCommand("select id from users where lower(name)=lower(@name)", db);
+    await using var exists = new NpgsqlCommand("select id from lifeflow_users where lower(name)=lower(@name)", db);
     exists.Parameters.AddWithValue("name", dto.Name);
     if (await exists.ExecuteScalarAsync() is not null) return Results.BadRequest(new { error = "User name already exists." });
-    await using var cmd = new NpgsqlCommand("insert into users(name,password_hash) values(@name,@password)", db);
+    await using var cmd = new NpgsqlCommand("insert into lifeflow_users(name,password_hash) values(@name,@password)", db);
     cmd.Parameters.AddWithValue("name", dto.Name);
     cmd.Parameters.AddWithValue("password", HashPassword(dto.Password));
     await cmd.ExecuteNonQueryAsync();
@@ -79,7 +79,7 @@ app.MapPost("/api/login", async (LoginDto dto) =>
     }
     await using var db = new NpgsqlConnection(connectionString);
     await db.OpenAsync();
-    await using var cmd = new NpgsqlCommand("select id,name,password_hash from users where lower(name)=lower(@name)", db);
+    await using var cmd = new NpgsqlCommand("select id,name,password_hash from lifeflow_users where lower(name)=lower(@name)", db);
     cmd.Parameters.AddWithValue("name", dto.Name);
     await using var reader = await cmd.ExecuteReaderAsync();
     if (!await reader.ReadAsync())
@@ -397,15 +397,15 @@ static async Task<IResult> SaveRequest(string db, BloodRequest r)
 static async Task EnsureDatabase(string db, IConfiguration configuration)
 {
     const string schema = """
-        create table if not exists users (
+        create table if not exists lifeflow_users (
           id serial primary key,
           name text not null unique,
           password_hash text not null,
           created_at timestamptz not null default now()
         );
 
-        alter table if exists users add column if not exists password_hash text;
-        alter table if exists users add column if not exists created_at timestamptz not null default now();
+        alter table if exists lifeflow_users add column if not exists password_hash text;
+        alter table if exists lifeflow_users add column if not exists created_at timestamptz not null default now();
 
         create table if not exists donors (
           id serial primary key,
@@ -460,14 +460,14 @@ static async Task EnsureDatabase(string db, IConfiguration configuration)
         var cleanAdminName = adminName.Trim();
         var adminHash = HashPassword(adminPassword.Trim());
 
-        await using var updateAdmin = new NpgsqlCommand("update users set password_hash=@password where lower(name)=lower(@name)", conn);
+        await using var updateAdmin = new NpgsqlCommand("update lifeflow_users set password_hash=@password where lower(name)=lower(@name)", conn);
         updateAdmin.Parameters.AddWithValue("name", cleanAdminName);
         updateAdmin.Parameters.AddWithValue("password", adminHash);
         var updated = await updateAdmin.ExecuteNonQueryAsync();
 
         if (updated == 0)
         {
-            await using var insertAdmin = new NpgsqlCommand("insert into users (name, password_hash) values (@name, @password)", conn);
+            await using var insertAdmin = new NpgsqlCommand("insert into lifeflow_users (name, password_hash) values (@name, @password)", conn);
             insertAdmin.Parameters.AddWithValue("name", cleanAdminName);
             insertAdmin.Parameters.AddWithValue("password", adminHash);
             await insertAdmin.ExecuteNonQueryAsync();

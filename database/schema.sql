@@ -1,4 +1,4 @@
-create table if not exists users (
+create table if not exists lifeflow_users (
   id serial primary key,
   name text not null unique,
   password_hash text not null,

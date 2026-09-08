@@ -18,6 +18,15 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 app.UseCors();
+app.UseExceptionHandler(handler =>
+{
+    handler.Run(async context =>
+    {
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(new { error = "Server error. Check database connection and make sure database/schema.sql was run." });
+    });
+});
 
 var demoUsers = new List<(int Id, string Name, string Password)> { (1, "admin", "123456") };
 var demoDonors = new List<Donor> { new(1, "Aung Aung", 22, "0912345678", "Male", "A+", "Yangon") };

@@ -113,10 +113,10 @@ Vue.createApp({
       try {
         const res = await fetch(API + "/");
         this.apiOnline = res.ok;
-        if (!res.ok) this.error = "Service is not available.";
-      } catch {
+        if (!res.ok) this.error = `API check failed: ${res.status} ${res.statusText}`;
+      } catch (e) {
         this.apiOnline = false;
-        this.error = "Service is not available.";
+        this.error = `Cannot reach API: ${API}. ${e.message || "Check Render and CORS."}`;
       }
     },
     async call(path, options = {}) {
@@ -124,14 +124,19 @@ Vue.createApp({
       let res;
       try {
         res = await fetch(API + path, { headers: { "Content-Type": "application/json" }, ...options });
-      } catch {
+      } catch (e) {
         this.apiOnline = false;
-        throw new Error("Service is not available.");
+        throw new Error(`Cannot reach API: ${API}. ${e.message || "Check Render and CORS."}`);
       }
       this.apiOnline = true;
       const text = await res.text();
-      const data = text ? JSON.parse(text) : null;
-      if (!res.ok) throw new Error(data?.error || `Request failed with status ${res.status}.`);
+      let data = null;
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch {
+        data = { error: text };
+      }
+      if (!res.ok) throw new Error(data?.error || `API error: ${res.status} ${res.statusText}.`);
       return data;
     },
     async login() {

@@ -457,14 +457,21 @@ static async Task EnsureDatabase(string db, IConfiguration configuration)
     var adminPassword = configuration["ADMIN_PASSWORD"] ?? Environment.GetEnvironmentVariable("ADMIN_PASSWORD");
     if (!string.IsNullOrWhiteSpace(adminName) && !string.IsNullOrWhiteSpace(adminPassword))
     {
-        await using var seedAdmin = new NpgsqlCommand("""
-            insert into users (name, password_hash)
-            values (@name, @password)
-            on conflict (name) do update set password_hash = excluded.password_hash
-            """, conn);
-        seedAdmin.Parameters.AddWithValue("name", adminName.Trim());
-        seedAdmin.Parameters.AddWithValue("password", HashPassword(adminPassword.Trim()));
-        await seedAdmin.ExecuteNonQueryAsync();
+        var cleanAdminName = adminName.Trim();
+        var adminHash = HashPassword(adminPassword.Trim());
+
+        await using var updateAdmin = new NpgsqlCommand("update users set password_hash=@password where lower(name)=lower(@name)", conn);
+        updateAdmin.Parameters.AddWithValue("name", cleanAdminName);
+        updateAdmin.Parameters.AddWithValue("password", adminHash);
+        var updated = await updateAdmin.ExecuteNonQueryAsync();
+
+        if (updated == 0)
+        {
+            await using var insertAdmin = new NpgsqlCommand("insert into users (name, password_hash) values (@name, @password)", conn);
+            insertAdmin.Parameters.AddWithValue("name", cleanAdminName);
+            insertAdmin.Parameters.AddWithValue("password", adminHash);
+            await insertAdmin.ExecuteNonQueryAsync();
+        }
     }
 }
 

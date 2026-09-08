@@ -54,3 +54,13 @@ After the PostgreSQL database is created, run `database/schema.sql`.
 ## Vercel Deploy
 
 Deploy the `web` folder as a static project. Then edit `config.js` so `window.API_URL` points to the Render API URL.
+
+## Presentation Files
+
+The `docs` folder includes:
+
+- `component-diagram.svg`
+- `use-case-diagram.svg`
+- `presentation-guide.md`
+
+Open the SVG files in a browser or place them into presentation slides.

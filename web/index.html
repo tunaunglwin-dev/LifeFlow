@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LifeFlow Blood Bank</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <header v-if="!user" class="site-nav">
+      <button class="brand-button" @click="publicPage='home'">
+        <span class="logo"><span></span></span>
+        <span>LifeFlow</span>
+      </button>
+      <nav>
+        <button :class="{ active: publicPage === 'home' }" @click="publicPage='home'">Home</button>
+        <button :class="{ active: publicPage === 'about' }" @click="publicPage='about'">About</button>
+        <button class="nav-cta" @click="publicPage='login'">Login</button>
+      </nav>
+    </header>
+
+    <main v-if="!user" class="website fade-in">
+      <section v-if="publicPage==='home'" class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Blood bank management</p>
+          <h1>Organize donation, stock, requests, and transfers in one place.</h1>
+          <p class="lead">LifeFlow helps teams track donors, manage available blood units, handle patient requests, and review transfer records from a focused dashboard.</p>
+          <div class="hero-actions">
+            <button class="primary" @click="publicPage='login'">Open Dashboard</button>
+            <button class="ghost" @click="publicPage='about'">Learn More</button>
+          </div>
+        </div>
+        <div class="hero-panel">
+          <div class="pulse-card">
+            <span class="logo large"><span></span></span>
+            <h2>Ready to help faster</h2>
+            <p>Clear records support smoother decisions when hospitals and patients need blood.</p>
+          </div>
+          <div class="mini-stats">
+            <div><span>Donors</span><strong>128</strong></div>
+            <div><span>Units</span><strong>342</strong></div>
+            <div><span>Requests</span><strong>16</strong></div>
+          </div>
+        </div>
+      </section>
+
+      <section v-if="publicPage==='home'" class="site-section">
+        <div class="section-head">
+          <p class="eyebrow">Core modules</p>
+          <h2>Built around the daily blood bank workflow</h2>
+        </div>
+        <div class="feature-grid">
+          <article><span>01</span><h3>Donor Records</h3><p>Store donor contact details, age, gender, blood type, and address.</p></article>
+          <article><span>02</span><h3>Blood Stock</h3><p>Track available units by blood type and update stock after transfers.</p></article>
+          <article><span>03</span><h3>Requests</h3><p>Record patient and hospital requests with status updates.</p></article>
+          <article><span>04</span><h3>Reports</h3><p>Review issued blood history from a clean report table.</p></article>
+        </div>
+      </section>
+
+      <section v-if="publicPage==='about'" class="site-section about-page">
+        <div class="section-head">
+          <p class="eyebrow">About LifeFlow</p>
+          <h1>A simple system for student blood bank projects</h1>
+          <p class="lead">LifeFlow shows the full project flow without making the interface confusing. The dashboard is the main workspace, and every feature connects back to donor care, stock control, and transfer records.</p>
+        </div>
+        <div class="about-grid">
+          <div class="panel"><h2>Purpose</h2><p>Help small teams manage blood donation data with simple forms, clear tables, and fast navigation.</p></div>
+          <div class="panel"><h2>Technology</h2><p>The backend uses C# ASP.NET Core. The frontend uses Vue.js. PostgreSQL stores production data.</p></div>
+          <div class="panel"><h2>Deployment</h2><p>The API is ready for Render, and the static Vue frontend is ready for Vercel.</p></div>
+        </div>
+      </section>
+
+      <section v-if="publicPage==='login'" class="auth-wrap">
+        <div class="auth-card">
+          <div class="logo-line">
+            <span class="logo"><span></span></span>
+            <div><strong>LifeFlow</strong><small>Blood Bank System</small></div>
+          </div>
+          <h1>Login to dashboard</h1>
+          <p class="muted">Use your account to manage donors, stock, requests, transfers, and reports.</p>
+          <form @submit.prevent="login" class="stack">
+            <label>User name<input v-model="auth.name" placeholder="admin" required></label>
+            <label>Password<input v-model="auth.password" type="password" placeholder="123456" required></label>
+            <button class="primary">Login</button>
+            <button type="button" class="ghost" @click="register">Create Account</button>
+          </form>
+          <p class="error" v-if="error">{{ error }}</p>
+        </div>
+      </section>
+    </main>
+
+    <main v-else class="app-shell fade-in">
+      <aside class="sidebar">
+        <div class="brand-row">
+          <span class="logo small"><span></span></span>
+          <div><strong>LifeFlow</strong><span>{{ user.name }}</span></div>
+        </div>
+        <button v-for="item in menu" :key="item.key" :class="{ active: page === item.key }" @click="openPage(item.key)">
+          <span>{{ item.icon }}</span>{{ item.label }}
+        </button>
+        <button class="logout" @click="logout">Logout</button>
+      </aside>
+
+      <section class="content">
+        <header class="topbar">
+          <div><p class="eyebrow">Blood Bank</p><h1>{{ currentTitle }}</h1></div>
+          <button class="ghost" @click="loadAll">Refresh</button>
+        </header>
+        <p class="error" v-if="error">{{ error }}</p>
+
+        <section v-if="page==='dashboard'" class="stats">
+          <div class="stat-card red"><span>Total Donors</span><strong>{{ dashboard.donors || 0 }}</strong><small>Registered donors</small></div>
+          <div class="stat-card blue"><span>Blood Units</span><strong>{{ dashboard.stockUnits || 0 }}</strong><small>Available in stock</small></div>
+          <div class="stat-card amber"><span>Open Requests</span><strong>{{ dashboard.requests || 0 }}</strong><small>Need attention</small></div>
+          <div class="stat-card green"><span>Transfers</span><strong>{{ dashboard.transfers || 0 }}</strong><small>Issued records</small></div>
+        </section>
+
+        <section v-if="page==='dashboard'" class="panel">
+          <div class="panel-head"><h2>Quick Actions</h2><span class="soft-label">Main workflow</span></div>
+          <div class="quick-actions">
+            <button @click="openPage('donors')"><span>01</span>Add Donor</button>
+            <button @click="openPage('stock')"><span>02</span>Add Stock</button>
+            <button @click="openPage('requests')"><span>03</span>Create Request</button>
+            <button @click="openPage('transfers')"><span>04</span>Issue Blood</button>
+            <button @click="openPage('reports')"><span>05</span>View Reports</button>
+          </div>
+        </section>
+
+        <section v-if="page==='dashboard'" class="inventory-panel">
+          <div class="panel-head">
+            <h2>Blood Inventory</h2>
+            <span class="soft-label">{{ totalAvailableUnits }} units available</span>
+          </div>
+          <div class="blood-grid">
+            <button v-for="item in bloodInventory" :key="item.type" :class="['blood-card', item.level]">
+              <span>{{ item.type }}</span>
+              <strong>{{ item.units }}</strong>
+              <small>{{ item.label }}</small>
+            </button>
+          </div>
+        </section>
+
+        <section v-if="page==='dashboard'" class="operations-grid">
+          <div class="panel alert-panel">
+            <div class="panel-head">
+              <h2>Priority Alerts</h2>
+              <span class="soft-label">{{ priorityAlerts.length }} active</span>
+            </div>
+            <div v-if="priorityAlerts.length" class="alert-list">
+              <div v-for="alert in priorityAlerts" :key="alert.title" :class="['alert-item', alert.level]">
+                <span>{{ alert.levelLabel }}</span>
+                <div>
+                  <h3>{{ alert.title }}</h3>
+                  <p>{{ alert.message }}</p>
+                </div>
+              </div>
+            </div>
+            <p v-else class="muted">No urgent stock or request alerts right now.</p>
+          </div>
+
+          <div class="panel request-panel">
+            <div class="panel-head">
+              <h2>Request Queue</h2>
+              <button class="ghost" @click="openPage('requests')">Manage</button>
+            </div>
+            <div v-if="pendingRequests.length" class="request-list">
+              <button v-for="request in pendingRequests.slice(0, 5)" :key="request.id" @click="openPage('transfers')">
+                <span>{{ request.blood_type }}</span>
+                <div>
+                  <strong>{{ request.patient_name }}</strong>
+                  <small>{{ request.hospital_name }} - {{ request.units }} unit(s)</small>
+                </div>
+              </button>
+            </div>
+            <p v-else class="muted">No pending requests.</p>
+          </div>
+        </section>
+
+        <section v-if="page==='dashboard'" class="dashboard-grid">
+          <div class="panel"><h2>Recent Stock</h2><data-table :rows="stock.slice(0, 5)"></data-table></div>
+          <div class="panel"><h2>Recent Transfers</h2><data-table :rows="reports.slice(0, 5)"></data-table></div>
+        </section>
+
+        <section v-if="page==='donors'" class="panel">
+          <div class="panel-head"><h2>Donor Records</h2><button class="ghost" @click="resetDonor">New Donor</button></div>
+          <form @submit.prevent="save('donors', donorForm)" class="form-grid">
+            <label>Name<input v-model="donorForm.name" required></label>
+            <label>Age<input v-model.number="donorForm.age" type="number" min="1" max="120" required></label>
+            <label>Phone<input v-model="donorForm.phone" required></label>
+            <label>Gender<select v-model="donorForm.gender"><option>Male</option><option>Female</option><option>Other</option></select></label>
+            <label>Blood Type<select v-model="donorForm.bloodType"><option v-for="b in bloodTypes" :key="b">{{ b }}</option></select></label>
+            <label>Address<input v-model="donorForm.address"></label>
+            <button class="primary">{{ donorForm.id ? 'Update Donor' : 'Add Donor' }}</button>
+          </form>
+          <data-table :rows="donors" @edit="editDonor" @delete="remove('donors',$event)"></data-table>
+        </section>
+
+        <section v-if="page==='stock'" class="panel">
+          <div class="panel-head"><h2>Blood Stock</h2><button class="ghost" @click="resetStock">New Stock</button></div>
+          <form @submit.prevent="save('stock', stockForm)" class="form-grid">
+            <label>Donor Name<input v-model="stockForm.donorName" required></label>
+            <label>Blood Type<select v-model="stockForm.bloodType"><option v-for="b in bloodTypes" :key="b">{{ b }}</option></select></label>
+            <label>Units<input v-model.number="stockForm.units" type="number" min="0" required></label>
+            <button class="primary">{{ stockForm.id ? 'Update Stock' : 'Add Stock' }}</button>
+          </form>
+          <data-table :rows="stock" @edit="editStock" @delete="remove('stock',$event)"></data-table>
+        </section>
+
+        <section v-if="page==='requests'" class="panel">
+          <div class="panel-head"><h2>Blood Requests</h2><button class="ghost" @click="resetRequest">New Request</button></div>
+          <form @submit.prevent="save('requests', requestForm)" class="form-grid">
+            <label>Patient Name<input v-model="requestForm.patientName" required></label>
+            <label>Hospital Name<input v-model="requestForm.hospitalName" required></label>
+            <label>Blood Type<select v-model="requestForm.bloodType"><option v-for="b in bloodTypes" :key="b">{{ b }}</option></select></label>
+            <label>Units<input v-model.number="requestForm.units" type="number" min="1" required></label>
+            <label>Status<select v-model="requestForm.status"><option>Pending</option><option>Approved</option><option>Completed</option><option>Cancelled</option></select></label>
+            <button class="primary">{{ requestForm.id ? 'Update Request' : 'Add Request' }}</button>
+          </form>
+          <data-table :rows="requests" @edit="editRequest" @delete="remove('requests',$event)"></data-table>
+        </section>
+
+        <section v-if="page==='transfers'" class="panel">
+          <h2>Blood Transfer</h2>
+          <form @submit.prevent="issueBlood" class="form-grid">
+            <label>Patient Name<input v-model="transferForm.patientName" required></label>
+            <label>Hospital Name<input v-model="transferForm.hospitalName" required></label>
+            <label>Blood Type<select v-model="transferForm.bloodType"><option v-for="b in bloodTypes" :key="b">{{ b }}</option></select></label>
+            <label>Units<input v-model.number="transferForm.units" type="number" min="1" required></label>
+            <button class="primary">Issue Blood</button>
+          </form>
+          <h3>Available Stock</h3>
+          <data-table :rows="stock"></data-table>
+        </section>
+
+        <section v-if="page==='reports'" class="panel">
+          <h2>Transfer Reports</h2>
+          <data-table :rows="reports"></data-table>
+        </section>
+      </section>
+    </main>
+  </div>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

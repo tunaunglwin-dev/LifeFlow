@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: blood-bank-api
+    runtime: docker
+    plan: free
+    rootDir: api
+    envVars:
+      - key: ASPNETCORE_URLS
+        value: http://0.0.0.0:8080
+      - key: CORS_ORIGIN
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: blood-bank-db
+          property: connectionString
+
+databases:
+  - name: blood-bank-db
+    plan: free

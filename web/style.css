@@ -189,6 +189,30 @@ h3 { font-size: 17px; font-weight: 500; }
 .feature-grid p, .panel p { color: var(--muted); line-height: 1.6; }
 
 .auth-wrap { display: grid; min-height: calc(100vh - 82px); place-items: center; }
+.donor-register-page { padding: 46px 0 20px; }
+.register-layout {
+  align-items: start;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, .75fr);
+}
+.donor-public-form {
+  margin: 0;
+}
+.donor-note {
+  background: linear-gradient(145deg, #fff7f8, #ffffff);
+  border-color: #f5d2d8;
+}
+.donor-note .logo {
+  margin-bottom: 22px;
+}
+.success {
+  background: #ecfdf5;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  color: #166534 !important;
+  padding: 12px;
+}
 .auth-card {
   background: rgba(255, 255, 255, .9);
   border: 1px solid rgba(255, 255, 255, .8);
@@ -385,6 +409,7 @@ td button { margin-right: 6px; }
   .site-nav { align-items: flex-start; flex-direction: column; gap: 12px; }
   .hero { grid-template-columns: 1fr; min-height: auto; }
   .app-shell { grid-template-columns: 1fr; }
+  .register-layout { grid-template-columns: 1fr; }
   .content { padding: 18px; }
   .topbar { align-items: flex-start; flex-direction: column; }
   .operations-grid { grid-template-columns: 1fr; }

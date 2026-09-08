@@ -58,6 +58,8 @@ Vue.createApp({
       requests: [],
       reports: [],
       donorForm: emptyDonor(),
+      publicDonor: emptyDonor(),
+      publicDonorSaved: false,
       stockForm: emptyStock(),
       requestForm: emptyRequest(),
       transferForm: emptyTransfer()
@@ -143,6 +145,13 @@ Vue.createApp({
       try {
         await this.call("/api/register", { method: "POST", body: JSON.stringify(this.auth) });
         await this.login();
+      } catch (e) { this.error = e.message; }
+    },
+    async submitPublicDonor() {
+      try {
+        await this.call("/api/donors", { method: "POST", body: JSON.stringify(this.publicDonor) });
+        this.publicDonor = emptyDonor();
+        this.publicDonorSaved = true;
       } catch (e) { this.error = e.message; }
     },
     logout() { localStorage.removeItem("bb_user"); this.user = null; this.page = "dashboard"; this.publicPage = "home"; },

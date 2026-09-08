@@ -16,7 +16,8 @@
       <nav>
         <button :class="{ active: publicPage === 'home' }" @click="publicPage='home'">Home</button>
         <button :class="{ active: publicPage === 'about' }" @click="publicPage='about'">About</button>
-        <button class="nav-cta" @click="publicPage='login'">Login</button>
+        <button :class="{ active: publicPage === 'donor-register' }" @click="publicPage='donor-register'">Donor Register</button>
+        <button class="nav-cta" @click="publicPage='login'">Admin Login</button>
       </nav>
     </header>
 
@@ -27,7 +28,8 @@
           <h1>Organize donation, stock, requests, and transfers in one place.</h1>
           <p class="lead">LifeFlow helps teams track donors, manage available blood units, handle patient requests, and review transfer records from a focused dashboard.</p>
           <div class="hero-actions">
-            <button class="primary" @click="publicPage='login'">Open Dashboard</button>
+            <button class="primary" @click="publicPage='donor-register'">Become a Donor</button>
+            <button class="ghost" @click="publicPage='login'">Admin Login</button>
             <button class="ghost" @click="publicPage='about'">Learn More</button>
           </div>
         </div>
@@ -77,16 +79,41 @@
             <span class="logo"><span></span></span>
             <div><strong>LifeFlow</strong><small>Blood Bank System</small></div>
           </div>
-          <h1>Login to dashboard</h1>
-          <p class="muted">Use your account to manage donors, stock, requests, transfers, and reports.</p>
+          <h1>Admin login</h1>
+          <p class="muted">Authorized staff can manage donor records, stock, requests, transfers, and reports.</p>
           <form @submit.prevent="login" class="stack">
             <label>User name<input v-model="auth.name" placeholder="admin" required></label>
             <label>Password<input v-model="auth.password" type="password" placeholder="123456" required></label>
             <button class="primary">Login</button>
-            <button type="button" class="ghost" @click="register">Create Account</button>
           </form>
           <p class="error" v-if="error">{{ error }}</p>
         </div>
+      </section>
+
+      <section v-if="publicPage==='donor-register'" class="donor-register-page">
+        <div class="section-head">
+          <p class="eyebrow">Donor registration</p>
+          <h1>Register as a blood donor</h1>
+          <p class="lead">Share your contact and blood type so the blood bank team can keep donor records ready when help is needed.</p>
+        </div>
+        <div class="register-layout">
+          <form @submit.prevent="submitPublicDonor" class="panel form-grid donor-public-form">
+            <label>Name<input v-model="publicDonor.name" required></label>
+            <label>Age<input v-model.number="publicDonor.age" type="number" min="1" max="120" required></label>
+            <label>Phone<input v-model="publicDonor.phone" required></label>
+            <label>Gender<select v-model="publicDonor.gender"><option>Male</option><option>Female</option><option>Other</option></select></label>
+            <label>Blood Type<select v-model="publicDonor.bloodType"><option v-for="b in bloodTypes" :key="b">{{ b }}</option></select></label>
+            <label>Address<input v-model="publicDonor.address"></label>
+            <button class="primary">Submit Registration</button>
+          </form>
+          <div class="panel donor-note">
+            <span class="logo large"><span></span></span>
+            <h2>Every record matters</h2>
+            <p>Submitted donor information appears in the admin dashboard donor records. Staff can later contact donors and manage stock from the internal workspace.</p>
+            <p class="success" v-if="publicDonorSaved">Registration submitted successfully.</p>
+          </div>
+        </div>
+        <p class="error" v-if="error">{{ error }}</p>
       </section>
     </main>
 

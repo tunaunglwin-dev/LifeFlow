@@ -279,12 +279,19 @@ static string HashPassword(string password)
 
 static bool VerifyPassword(string password, string stored)
 {
-    var parts = stored.Split(':');
-    if (parts.Length != 2) return false;
-    var salt = Convert.FromBase64String(parts[0]);
-    var original = Convert.FromBase64String(parts[1]);
-    var current = Rfc2898DeriveBytes.Pbkdf2(password, salt, 100000, HashAlgorithmName.SHA256, 32);
-    return CryptographicOperations.FixedTimeEquals(current, original);
+    try
+    {
+        var parts = stored.Split(':');
+        if (parts.Length != 2) return false;
+        var salt = Convert.FromBase64String(parts[0]);
+        var original = Convert.FromBase64String(parts[1]);
+        var current = Rfc2898DeriveBytes.Pbkdf2(password, salt, 100000, HashAlgorithmName.SHA256, 32);
+        return CryptographicOperations.FixedTimeEquals(current, original);
+    }
+    catch
+    {
+        return false;
+    }
 }
 
 static async Task<int> ScalarInt(NpgsqlConnection db, string sql, params (string Name, object Value)[] parameters)
@@ -450,7 +457,7 @@ static async Task EnsureDatabase(string db, IConfiguration configuration)
         await using var seedAdmin = new NpgsqlCommand("""
             insert into users (name, password_hash)
             values (@name, @password)
-            on conflict (name) do nothing
+            on conflict (name) do update set password_hash = excluded.password_hash
             """, conn);
         seedAdmin.Parameters.AddWithValue("name", adminName.Trim());
         seedAdmin.Parameters.AddWithValue("password", HashPassword(adminPassword.Trim()));

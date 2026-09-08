@@ -48,6 +48,8 @@ Create a Render Blueprint from this repository using `render.yaml`, or create a 
 - Runtime: Docker
 - Environment variable: `DATABASE_URL`
 - Environment variable: `CORS_ORIGIN` with the Vercel frontend URL
+- Environment variable: `ADMIN_USERNAME`
+- Environment variable: `ADMIN_PASSWORD`
 
 After the PostgreSQL database is created, run `database/schema.sql`.
 

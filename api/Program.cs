@@ -30,7 +30,7 @@ app.UseExceptionHandler(handler =>
 
 if (connectionString is not null)
 {
-    await EnsureDatabase(connectionString);
+    await EnsureDatabase(connectionString, builder.Configuration);
 }
 
 var demoUsers = new List<(int Id, string Name, string Password)> { (1, "admin", "123456") };
@@ -82,7 +82,10 @@ app.MapPost("/api/login", async (LoginDto dto) =>
     await using var cmd = new NpgsqlCommand("select id,name,password_hash from users where lower(name)=lower(@name)", db);
     cmd.Parameters.AddWithValue("name", dto.Name);
     await using var reader = await cmd.ExecuteReaderAsync();
-    if (!await reader.ReadAsync() || !VerifyPassword(dto.Password, reader.GetString(2)))
+    if (!await reader.ReadAsync())
+        return Results.BadRequest(new { error = "User name and password do not match." });
+    var storedPassword = reader.GetString(2);
+    if (!VerifyPassword(dto.Password, storedPassword))
         return Results.BadRequest(new { error = "User name and password do not match." });
     return Results.Ok(new { id = reader.GetInt32(0), name = reader.GetString(1) });
 });
@@ -384,7 +387,7 @@ static async Task<IResult> SaveRequest(string db, BloodRequest r)
     return Results.Ok();
 }
 
-static async Task EnsureDatabase(string db)
+static async Task EnsureDatabase(string db, IConfiguration configuration)
 {
     const string schema = """
         create table if not exists users (
@@ -439,6 +442,20 @@ static async Task EnsureDatabase(string db)
     await conn.OpenAsync();
     await using var cmd = new NpgsqlCommand(schema, conn);
     await cmd.ExecuteNonQueryAsync();
+
+    var adminName = configuration["ADMIN_USERNAME"] ?? Environment.GetEnvironmentVariable("ADMIN_USERNAME");
+    var adminPassword = configuration["ADMIN_PASSWORD"] ?? Environment.GetEnvironmentVariable("ADMIN_PASSWORD");
+    if (!string.IsNullOrWhiteSpace(adminName) && !string.IsNullOrWhiteSpace(adminPassword))
+    {
+        await using var seedAdmin = new NpgsqlCommand("""
+            insert into users (name, password_hash)
+            values (@name, @password)
+            on conflict (name) do nothing
+            """, conn);
+        seedAdmin.Parameters.AddWithValue("name", adminName.Trim());
+        seedAdmin.Parameters.AddWithValue("password", HashPassword(adminPassword.Trim()));
+        await seedAdmin.ExecuteNonQueryAsync();
+    }
 }
 
 record LoginDto(string Name, string Password);

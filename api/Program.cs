@@ -263,7 +263,8 @@ static string NormalizeConnectionString(string value)
     var uri = new Uri(value);
     var userInfo = uri.UserInfo.Split(':', 2);
     var database = uri.AbsolutePath.TrimStart('/');
-    return $"Host={uri.Host};Port={uri.Port};Database={database};Username={Uri.UnescapeDataString(userInfo[0])};Password={Uri.UnescapeDataString(userInfo.Length > 1 ? userInfo[1] : "")};SSL Mode=Require;Trust Server Certificate=true";
+    var port = uri.Port > 0 ? uri.Port : 5432;
+    return $"Host={uri.Host};Port={port};Database={database};Username={Uri.UnescapeDataString(userInfo[0])};Password={Uri.UnescapeDataString(userInfo.Length > 1 ? userInfo[1] : "")};SSL Mode=Require;Trust Server Certificate=true";
 }
 
 static string HashPassword(string password)

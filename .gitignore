@@ -2,4 +2,5 @@ api/bin/
 api/obj/
 api/appsettings.json
 web/.vercel/
+web/dist/
 *.zip

@@ -404,6 +404,9 @@ static async Task EnsureDatabase(string db, IConfiguration configuration)
           created_at timestamptz not null default now()
         );
 
+        alter table if exists users add column if not exists password_hash text;
+        alter table if exists users add column if not exists created_at timestamptz not null default now();
+
         create table if not exists donors (
           id serial primary key,
           name text not null,
